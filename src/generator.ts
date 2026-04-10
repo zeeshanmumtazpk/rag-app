@@ -16,28 +16,17 @@ export async function generate(
   const contextText = context
     .map((c, i) => `[Source ${i + 1}]\n${c.content}`)
     .join("\n\n---\n\n");
-console.log("Context for generation:\n", contextText);
-console.log('chat',{
-    model: `${MODEL}`,  // ← only change here
-    messages: [
-      {
-        role: "system",
-        content: `Answer using ONLY the context below. If the answer isn't 
-in the context, say "I don't have enough information to answer that."
-
-Context:
-${contextText}`,
-      },
-      { role: "user", content: question },
-    ],
-  })
   const response = await ollama.chat.completions.create({
     model: `${MODEL}`,  // ← only change here
     messages: [
       {
         role: "system",
-        content: `Answer using ONLY the context below. If the answer isn't 
-in the context, say "I don't have enough information to answer that."
+        content: `Answer using ONLY the context below.
+If the context does not contain enough information to answer 
+confidently, respond with exactly: 
+"I don't have enough information to answer that based on the 
+available documents."
+Do NOT use any outside knowledge. Do NOT guess.
 
 Context:
 ${contextText}`,
@@ -46,6 +35,5 @@ ${contextText}`,
     ],
   });
 
-  console.log("Generated response:\n", JSON.stringify(response));
   return response.choices[0].message.content ?? "";
 }

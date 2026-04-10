@@ -32,19 +32,32 @@ async function main() {
 
   // --- QUERYING (runs on every user request) ---
   const question = "How do I cancel my subscription?";
-
-  console.log(`\nQuestion: ${question}`);
-
-  const chunks = await retrieve(question, 4);
-  console.log(`\nRetrieved ${chunks.length} chunks:`);
-  chunks.forEach((c, i) =>
-    console.log(`  [${i + 1}] similarity: ${c.similarity.toFixed(3)} — "${c.content.slice(0, 60)}..."`)
-  );
-
-  const answer = await generate(question, chunks);
+  const answer = await rag(question);;
   console.log(`\nAnswer: ${answer}`);
 
   await pool.end();
 }
+async function rag(question: string): Promise<string> {
+  const chunks = await retrieve(question, 4, 0.75);
 
+  // Log retrieval quality on every request
+  const topScore = chunks[0]?.similarity ?? 0;
+  console.log(JSON.stringify({
+    question,
+    chunksRetrieved: chunks.length,
+    topSimilarity: topScore.toFixed(3),
+    retrievalStatus: chunks.length === 0 
+      ? "FAILED" 
+      : topScore < 0.80 
+        ? "LOW_CONFIDENCE" 
+        : "OK"
+  }));
+
+  // Short-circuit — don't call LLM if retrieval failed
+  if (chunks.length === 0) {
+    return "I don't have enough information to answer that.";
+  }
+
+  return await generate(question, chunks);
+}
 main().catch(console.error);

@@ -10,7 +10,8 @@ export interface RetrievedChunk {
 
 export async function retrieve(
   question: string,
-  topK: number = 4
+  topK: number = 4,
+  similarityThreshold: number = 0.75  // ← add this
 ): Promise<RetrievedChunk[]> {
   const queryVector = await embed(question);
   const queryJson = JSON.stringify(queryVector);
@@ -22,10 +23,11 @@ export async function retrieve(
     `SELECT content, metadata,
        1 - (embedding <=> $1::vector) AS similarity
      FROM documents
+     WHERE 1 - (embedding <=> $1::vector) >= $3  -- filter by similarity threshold
      ORDER BY embedding <=> $1::vector
      LIMIT $2`,
-    [queryJson, topK]
+    [queryJson, topK, similarityThreshold]
   );
-  return result.rows;
+  return result.rows
 }
 //The <=> operator is pgvector's cosine distance. 1 - distance = similarity. Higher similarity = closer meaning. This single query is the entire retrieval step.

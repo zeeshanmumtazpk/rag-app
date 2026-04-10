@@ -32,6 +32,5 @@ export async function setupDB() {
     WITH (lists = 10)
   `);
 
-  console.log("DB ready ✓");
 }
 //The vector(1536) column is pgvector's native type. The ivfflat index is what makes similarity search fast at scale — without it, every query does a full table scan.

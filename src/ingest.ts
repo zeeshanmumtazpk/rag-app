@@ -8,19 +8,18 @@ export async function ingestDocument(
   source: string
 ): Promise<void> {
   const chunks = chunkText(text, source);
-  console.log(`Ingesting ${chunks.length} chunks from "${source}"...`);
-
   for (const chunk of chunks) {
     const vector = await embed(chunk.content);
     const vectorJson = JSON.stringify(vector);
 
     await pool.query(
-      `INSERT INTO documents (content, metadata, embedding)
-       VALUES ($1, $2, $3::vector)`,
+      `INSERT INTO documents (content, metadata, embedding,tenant_id)
+       VALUES ($1, $2, $3::vector, $4)`,
       [
         chunk.content,
         JSON.stringify(chunk.metadata),
         vectorJson,
+        chunk.tenant_id ||1,
       ]
     );
   }

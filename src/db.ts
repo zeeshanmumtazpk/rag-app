@@ -20,7 +20,8 @@ export async function setupDB() {
       embedding vector(768)             -- small model = 768 dims
     )
   `);
-
+    await pool.query(`ALTER TABLE documents
+    ADD COLUMN IF NOT EXISTS tenant_id VARCHAR DEFAULT NULL;`);
   // Recreate IVF index with a small list count suitable for a learning dataset.
   await pool.query(`DROP INDEX IF EXISTS documents_embedding_idx`);
 
